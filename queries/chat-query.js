@@ -3,7 +3,7 @@ const query = require('../db')
 class ChatQuery {
     async set(name, uid, type, model, param, createdAt, canEdit) {
         const data = await query(
-            'INSERT INTO chats (name, type, model, param, uid, createdat, canedit) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+            'INSERT INTO chats (name, type, model, param, uid, created_at, can_edit) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
             [name, type, model, param, uid, createdAt, canEdit]
         )
         return data

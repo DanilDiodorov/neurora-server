@@ -9,8 +9,8 @@ class UserQuery {
 
     async set(email, hashPassword, tokens, role, verified, createdAt) {
         await query(
-            'INSERT INTO users (email, password, tokens, role, verified, createdat) VALUES($1, $2, $3, $4, $5, $6)',
-            [email, hashPassword, tokens, role, verified, createdAt]
+            'INSERT INTO users (email, password, role, verified, created_at) VALUES($1, $2, $3, $4, $5)',
+            [email, hashPassword, role, verified, createdAt]
         )
     }
 

@@ -8,13 +8,23 @@ const socketIO = require('./io')
 const socket = require('socket.io')
 require('dotenv').config()
 
+app.set('trust proxy', 1)
+
+app.use(function (req, res, next) {
+    res.header('Access-Control-Allow-Origin', req.headers.origin)
+    res.header(
+        'Access-Control-Allow-Headers',
+        'Origin, X-Requested-With, Content-Type, Accept'
+    )
+    next()
+})
+
 app.use(cors({ credentials: true, origin: process.env.CLIENT_URL }))
 app.use(express.json())
 app.use('/', routes)
 app.use(cookieParser())
 
 app.use(errorHandler)
-app.set('trust proxy', 1)
 
 const server = app.listen(process.env.PORT, () => {
     console.log(`Example app listening on port ${process.env.PORT}`)

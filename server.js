@@ -6,7 +6,6 @@ const errorHandler = require('./middleware/error-handling-middleware')
 const cookieParser = require('cookie-parser')
 const socketIO = require('./io')
 const socket = require('socket.io')
-const query = require('./db')
 require('dotenv').config()
 
 app.use(cors({ credentials: true, origin: process.env.CLIENT_URL }))

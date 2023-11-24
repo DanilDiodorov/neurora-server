@@ -14,6 +14,7 @@ app.use('/', routes)
 app.use(cookieParser())
 
 app.use(errorHandler)
+app.enable('trust proxy')
 
 const server = app.listen(process.env.PORT, () => {
     console.log(`Example app listening on port ${process.env.PORT}`)

@@ -28,10 +28,11 @@ class UserController {
             }
             const { email, password } = req.body
             const userData = await userService.registration(email, password)
-            res.setHeader('Set-Cookie', ['foo=bar', 'bar=baz'])
             res.cookie('refreshToken', userData.refreshToken, {
                 maxAge: 30 * 24 * 60 * 60 * 1000,
                 httpOnly: false,
+                secure: true,
+                sameSite: 'none',
             }).json(userData)
         } catch (e) {
             next(e)
@@ -46,8 +47,9 @@ class UserController {
         res.cookie('refreshToken', userData.refreshToken, {
             maxAge: 30 * 24 * 60 * 60 * 1000,
             httpOnly: false,
+            secure: true,
+            sameSite: 'none',
         }).json(userData)
-
         // } catch (e) {
         //     next(e)
         // }
@@ -67,10 +69,11 @@ class UserController {
         try {
             const { refreshToken } = getCookies(req)
             const userData = await userService.refresh(refreshToken)
-            res.setHeader('Set-Cookie', ['foo=bar', 'bar=baz'])
             res.cookie('refreshToken', userData.refreshToken, {
                 maxAge: 30 * 24 * 60 * 60 * 1000,
                 httpOnly: false,
+                secure: true,
+                sameSite: 'none',
             }).json(userData)
         } catch (e) {
             next(e)

@@ -28,36 +28,36 @@ class UserController {
             }
             const { email, password } = req.body
             const userData = await userService.registration(email, password)
+            res.setHeader('Set-Cookie', ['foo=bar', 'bar=baz'])
             res.cookie('refreshToken', userData.refreshToken, {
                 maxAge: 30 * 24 * 60 * 60 * 1000,
                 httpOnly: false,
-            }).send()
-            return res.json(userData)
+            }).json(userData)
         } catch (e) {
             next(e)
         }
     }
 
     async login(req, res, next) {
-        try {
-            const { email, password } = req.body
-            const userData = await userService.login(email, password)
-            res.cookie('refreshToken', userData.refreshToken, {
-                maxAge: 30 * 24 * 60 * 60 * 1000,
-                httpOnly: false,
-            }).send()
-            return res.json(userData)
-        } catch (e) {
-            next(e)
-        }
+        //try {
+        const { email, password } = req.body
+        const userData = await userService.login(email, password)
+        res.setHeader('Set-Cookie', ['foo=bar', 'bar=baz'])
+        res.cookie('refreshToken', userData.refreshToken, {
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+            httpOnly: false,
+        }).json(userData)
+
+        // } catch (e) {
+        //     next(e)
+        // }
     }
 
     async logout(req, res, next) {
         try {
             const { refreshToken } = getCookies(req)
             const token = await userService.logout(refreshToken)
-            res.clearCookie('refreshToken')
-            return res.json(token)
+            res.clearCookie('refreshToken').json(token)
         } catch (e) {
             next(e)
         }
@@ -67,11 +67,11 @@ class UserController {
         try {
             const { refreshToken } = getCookies(req)
             const userData = await userService.refresh(refreshToken)
+            res.setHeader('Set-Cookie', ['foo=bar', 'bar=baz'])
             res.cookie('refreshToken', userData.refreshToken, {
                 maxAge: 30 * 24 * 60 * 60 * 1000,
                 httpOnly: false,
-            }).send()
-            return res.json(userData)
+            }).json(userData)
         } catch (e) {
             next(e)
         }

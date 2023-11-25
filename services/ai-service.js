@@ -23,9 +23,10 @@ class AiService {
     async generateImage(promt) {
         try {
             const response = await openai.images.generate({
-                promt: 'a black cat',
+                model: 'dall-e-2',
+                prompt: 'a white siamese cat',
                 n: 1,
-                size: '256x256',
+                size: '256x156',
             })
 
             return response.data.data[0].url

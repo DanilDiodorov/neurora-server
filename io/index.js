@@ -2,7 +2,19 @@ const aiService = require('../services/ai-service')
 const messageService = require('../services/message-service')
 const randomstring = require('randomstring')
 
+let current_chats = []
+
+const remove_chat = (chat_id) => {
+    current_chats = current_chats.filter((chat) => {
+        return chat !== chat_id
+    })
+}
+
 const socketIO = (io, socket) => {
+    socket.on('stop_generate', (data) => {
+        remove_chat(data)
+    })
+
     socket.on('message', async (data) => {
         try {
             let now = new Date().toString()
@@ -14,11 +26,13 @@ const socketIO = (io, socket) => {
                 mid,
             })
 
+            current_chats.push(data.chat_id)
+
             io.emit('chat message', {
                 mid,
                 chat_id: data.chat_id,
                 text: '',
-                ismy: false,
+                is_my: false,
                 type: data.chatType,
                 url: '',
                 created_at: now,
@@ -31,7 +45,7 @@ const socketIO = (io, socket) => {
                 data.text,
                 data.url,
                 now,
-                data.ismy
+                data.is_my
             )
 
             if (data.chatType === 'text') {
@@ -61,12 +75,17 @@ const socketIO = (io, socket) => {
                 let text = ''
 
                 for await (const part of response) {
-                    text += part.choices[0]?.delta?.content || ''
-                    io.emit('chat message part', {
-                        mid,
-                        text: part.choices[0]?.delta?.content || '',
-                        url: '',
-                    })
+                    if (current_chats.includes(data.chat_id)) {
+                        text += part.choices[0]?.delta?.content || ''
+                        io.emit('chat message part', {
+                            mid,
+                            text: part.choices[0]?.delta?.content || '',
+                            url: '',
+                        })
+                    } else {
+                        response.controller.abort()
+                        break
+                    }
                 }
 
                 io.emit('sending', {
@@ -83,9 +102,12 @@ const socketIO = (io, socket) => {
                     now,
                     false
                 )
+
+                remove_chat(data.chat_id)
             } else if (data.chatType === 'image') {
                 const response = await aiService.generateImage(data.text)
 
+                console.log(response)
                 io.emit('sending', {
                     chat_id: data.chat_id,
                     sending: 'start',

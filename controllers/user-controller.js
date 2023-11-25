@@ -40,19 +40,19 @@ class UserController {
     }
 
     async login(req, res, next) {
-        //try {
-        const { email, password } = req.body
-        const userData = await userService.login(email, password)
-        res.setHeader('Set-Cookie', ['foo=bar', 'bar=baz'])
-        res.cookie('refreshToken', userData.refreshToken, {
-            maxAge: 30 * 24 * 60 * 60 * 1000,
-            httpOnly: false,
-            secure: true,
-            sameSite: 'none',
-        }).json(userData)
-        // } catch (e) {
-        //     next(e)
-        // }
+        try {
+            const { email, password } = req.body
+            const userData = await userService.login(email, password)
+            res.setHeader('Set-Cookie', ['foo=bar', 'bar=baz'])
+            res.cookie('refreshToken', userData.refreshToken, {
+                maxAge: 30 * 24 * 60 * 60 * 1000,
+                httpOnly: false,
+                secure: true,
+                sameSite: 'none',
+            }).json(userData)
+        } catch (e) {
+            next(e)
+        }
     }
 
     async logout(req, res, next) {

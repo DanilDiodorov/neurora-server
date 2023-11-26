@@ -1,6 +1,8 @@
 const aiService = require('../services/ai-service')
 const messageService = require('../services/message-service')
 const randomstring = require('randomstring')
+const walletService = require('../services/wallet-service')
+const { encode, encodeChat } = require('gpt-tokenizer')
 
 let current_chats = []
 
@@ -72,14 +74,30 @@ const socketIO = (io, socket) => {
                     mid,
                 })
 
+                const balanceQuery = await walletService.find(data.uid)
+                let balance = balanceQuery.balance
+
                 let text = ''
 
+                balance -=
+                    encodeChat(filtredMessages, 'gpt-3.5-turbo').length * 0.0005
+
+                io.emit('chat message part', {
+                    balance,
+                    mid,
+                    text: '',
+                    url: '',
+                })
+
                 for await (const part of response) {
-                    if (current_chats.includes(data.chat_id)) {
-                        text += part.choices[0]?.delta?.content || ''
+                    if (current_chats.includes(data.chat_id) && balance > 0) {
+                        let temp = part.choices[0]?.delta?.content || ''
+                        balance -= encode(temp).length * 0.0007
+                        text += temp
                         io.emit('chat message part', {
+                            balance,
                             mid,
-                            text: part.choices[0]?.delta?.content || '',
+                            text: temp,
                             url: '',
                         })
                     } else {
@@ -87,12 +105,6 @@ const socketIO = (io, socket) => {
                         break
                     }
                 }
-
-                io.emit('sending', {
-                    chat_id: data.chat_id,
-                    sending: 'end',
-                    mid,
-                })
 
                 await messageService.addMessage(
                     data.chat_id,
@@ -103,7 +115,15 @@ const socketIO = (io, socket) => {
                     false
                 )
 
+                await walletService.setBalance(data.uid, balance)
+
                 remove_chat(data.chat_id)
+
+                io.emit('sending', {
+                    chat_id: data.chat_id,
+                    sending: 'end',
+                    mid,
+                })
             } else if (data.chatType === 'image') {
                 const response = await aiService.generateImage(data.text)
 

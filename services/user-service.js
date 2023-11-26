@@ -7,6 +7,7 @@ const mailService = require('./mail-service')
 const codeService = require('./code-service')
 const randomstring = require('randomstring')
 const chatService = require('./chat-service')
+const walletService = require('./wallet-service')
 
 class UserService {
     async registration(email, password) {
@@ -126,8 +127,12 @@ class UserService {
             throw ApiError.badRequest('Неверный код')
         }
 
+        const bonus = 100
+
         await codeService.deleteCode(user.id)
         await userQuery.updateVerified(user.id)
+        await walletService.createWallet(user.id)
+        await walletService.setBalance(user.id, bonus)
 
         return true
     }

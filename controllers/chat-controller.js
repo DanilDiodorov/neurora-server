@@ -1,20 +1,6 @@
 const { validationResult } = require('express-validator')
 const chatService = require('../services/chat-service')
-
-const getCookies = (req) => {
-    let cookies = {}
-    const {
-        headers: { cookie },
-    } = req
-    if (cookie) {
-        const values = cookie.split(';').reduce((res, item) => {
-            const data = item.trim().split('=')
-            return { ...res, [data[0]]: data[1] }
-        }, {})
-        cookies = values
-    }
-    return cookies
-}
+const getCookies = require('../utils/get-cookies')
 
 class ChatController {
     async addChat(req, res, next) {

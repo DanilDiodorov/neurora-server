@@ -1,4 +1,5 @@
 const chatQuery = require('../queries/chat-query')
+const messageService = require('./message-service')
 const tokenService = require('./token-service')
 
 class ChatService {
@@ -25,6 +26,7 @@ class ChatService {
 
     async deleteChat(id) {
         const response = await chatQuery.delete(id)
+        await messageService.deleteByChatID(id)
         return response.rows[0]
     }
 }

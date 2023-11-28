@@ -1,159 +1,20 @@
-const aiService = require('../services/ai-service')
-const messageService = require('../services/message-service')
-const randomstring = require('randomstring')
-const walletService = require('../services/wallet-service')
-const { encode, encodeChat } = require('gpt-tokenizer')
-
-let current_chats = []
-
-const remove_chat = (chat_id) => {
-    current_chats = current_chats.filter((chat) => {
-        return chat !== chat_id
-    })
-}
+const initMessage = require('./init-message')
+const sendTextMessage = require('./send-text-message')
+const sendImageMessage = require('./send-image-message')
+const removeChat = require('./current-chats')
 
 const socketIO = (io, socket) => {
     socket.on('stop_generate', (data) => {
-        remove_chat(data)
+        removeChat(data)
     })
 
     socket.on('message', async (data) => {
         try {
-            let now = new Date().toString()
-            const mid = randomstring.generate()
-
-            io.emit('sending', {
-                chat_id: data.chat_id,
-                sending: 'loading',
-                mid,
-            })
-
-            current_chats.push(data.chat_id)
-
-            io.emit('chat message', {
-                mid,
-                chat_id: data.chat_id,
-                text: '',
-                is_my: false,
-                type: data.chatType,
-                url: '',
-                created_at: now,
-                loading: true,
-            })
-
-            await messageService.addMessage(
-                data.chat_id,
-                data.type,
-                data.text,
-                data.url,
-                now,
-                data.is_my
-            )
-
+            const { now, mid } = await initMessage(io, data)
             if (data.chatType === 'text') {
-                const messages = await messageService.findByChatID(
-                    data.chat_id,
-                    10
-                )
-                const filtredMessages = messages
-                    .map((message) => {
-                        return {
-                            role: message.ismy ? 'user' : 'assistant',
-                            content: message.text,
-                        }
-                    })
-                    .reverse()
-                const response = await aiService.generateResponseStream(
-                    filtredMessages,
-                    data.chatModel
-                )
-
-                io.emit('sending', {
-                    chat_id: data.chat_id,
-                    sending: 'start',
-                    mid,
-                })
-
-                const balanceQuery = await walletService.find(data.uid)
-                let balance = balanceQuery.balance
-
-                let text = ''
-
-                balance -=
-                    encodeChat(filtredMessages, 'gpt-3.5-turbo').length * 0.0005
-
-                io.emit('chat message part', {
-                    balance,
-                    mid,
-                    text: '',
-                    url: '',
-                })
-
-                for await (const part of response) {
-                    if (current_chats.includes(data.chat_id) && balance > 0) {
-                        let temp = part.choices[0]?.delta?.content || ''
-                        balance -= encode(temp).length * 0.0007
-                        text += temp
-                        io.emit('chat message part', {
-                            balance,
-                            mid,
-                            text: temp,
-                            url: '',
-                        })
-                    } else {
-                        response.controller.abort()
-                        break
-                    }
-                }
-
-                await messageService.addMessage(
-                    data.chat_id,
-                    'text',
-                    text,
-                    '',
-                    now,
-                    false
-                )
-
-                await walletService.setBalance(data.uid, balance)
-
-                remove_chat(data.chat_id)
-
-                io.emit('sending', {
-                    chat_id: data.chat_id,
-                    sending: 'end',
-                    mid,
-                })
+                sendTextMessage(io, data, now, mid)
             } else if (data.chatType === 'image') {
-                const response = await aiService.generateImage(data.text)
-
-                console.log(response)
-                io.emit('sending', {
-                    chat_id: data.chat_id,
-                    sending: 'start',
-                    mid,
-                })
-
-                io.emit('chat message part', {
-                    mid,
-                    text: '',
-                    url: response,
-                })
-
-                io.emit('sending', {
-                    chat_id: data.chat_id,
-                    sending: 'end',
-                    mid,
-                })
-
-                await messageService.addMessage(
-                    data.chat_id,
-                    'image',
-                    '',
-                    response,
-                    now,
-                    false
-                )
+                sendImageMessage(io, data)
             }
         } catch (error) {
             console.log(error)

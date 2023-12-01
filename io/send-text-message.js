@@ -7,7 +7,7 @@ const costService = require('../services/cost-service.js')
 require('./current-chats.js')
 
 const sendTextMessage = async (io, data, now, mid) => {
-    const messages = await messageService.findByChatID(data.chat_id, 10)
+    const messages = await messageService.findByChatID(data.chat_id)
     const filtredMessages = messages
         .map((message) => {
             return {
@@ -32,8 +32,17 @@ const sendTextMessage = async (io, data, now, mid) => {
     let balance = balanceQuery.balance
     const inputCost = costQuery.input_cost
     const outputCost = costQuery.output_cost
+    const maxTokens = costQuery.max_token
 
     let text = ''
+
+    while (true) {
+        if (encodeChat(filtredMessages, 'gpt-3.5-turbo').length > maxTokens) {
+            filtredMessages.shift()
+        } else {
+            break
+        }
+    }
 
     balance -=
         encodeChat(filtredMessages, 'gpt-3.5-turbo').length * (inputCost / 1000)

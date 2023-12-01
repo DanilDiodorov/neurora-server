@@ -8,17 +8,17 @@ class MessageQuery {
         )
     }
 
-    async findByChatID(chatID, limit) {
+    async findByChatID(chatID, offset, limit) {
         let data
-        if (limit === null) {
+        if (limit === null && offset == null) {
             data = await query(
-                'SELECT * FROM messages WHERE chat_id=$1 ORDER BY id',
+                'SELECT * FROM messages WHERE chat_id=$1 ORDER BY id DESC',
                 [chatID]
             )
         } else {
             data = await query(
-                'SELECT * FROM messages WHERE chat_id=$1 ORDER BY id DESC LIMIT $2',
-                [chatID, limit]
+                'SELECT * FROM messages WHERE chat_id=$1 ORDER BY id DESC OFFSET $2 LIMIT $3',
+                [chatID, offset, limit]
             )
         }
         return data.rows

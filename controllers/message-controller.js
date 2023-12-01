@@ -2,8 +2,8 @@ const messageService = require('../services/message-service')
 
 class MessageController {
     async findByChatID(req, res, next) {
-        const { id } = req.body
-        const response = await messageService.findByChatID(id, 30)
+        const { id, offset, limit } = req.body
+        const response = await messageService.findByChatID(id, offset, limit)
         return res.json(response.reverse())
     }
 

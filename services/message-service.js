@@ -5,8 +5,8 @@ class MessageSevice {
         await messageQuery.set(chatID, type, text, url, createdAt, isMy)
     }
 
-    async findByChatID(chatID, limit = null) {
-        const response = await messageQuery.findByChatID(chatID, limit)
+    async findByChatID(chatID, offset = null, limit = null) {
+        const response = await messageQuery.findByChatID(chatID, offset, limit)
         return response
     }
 
